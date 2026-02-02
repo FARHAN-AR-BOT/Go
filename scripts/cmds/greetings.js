@@ -45,7 +45,7 @@ exports.onChat = async function({ event, api }) {
         api.sendMessage("ওলাইকুমুস সালাম", threadID, event.messageID);
         sent = true;
     } else if (isFork) {
-        api.sendMessage("🔗 My GitHub Repo:https://github.com/MILON-GOATX-BOT/MILON-GOAT-BOT", threadID, event.messageID);
+        api.sendMessage("🔗 My GitHub Repo:https://github.com/RAFI-GOAT-BOT-2/RAFI-GOAT-BOT-2", threadID, event.messageID);
         sent = true;
     }
 
