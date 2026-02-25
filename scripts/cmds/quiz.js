@@ -1,161 +1,91 @@
 const axios = require("axios");
-const fs = require("fs-extra");
-const path = __dirname + "/coinxbalance.json";
 
-// ✅ Create file if not exists
-if (!fs.existsSync(path)) {
-  fs.writeFileSync(path, JSON.stringify({}, null, 2));
-}
+const mahmud = async () => {
+  const base = await axios.get("https://raw.githubusercontent.com/mahmudx7/HINATA/main/baseApiUrl.json");
+  return base.data.mahmud;
+};
 
-// 🔹 Get balance
-function getBalance(userID) {
-  try {
-    const data = JSON.parse(fs.readFileSync(path, "utf-8"));
-    if (data[userID]?.balance !== undefined) return data[userID].balance;
-    return userID === "100078049308655" ? 10000 : 100;
-  } catch {
-    return 100;
-  }
-}
-
-// 🔹 Set balance
-function setBalance(userID, balance) {
-  try {
-    const data = JSON.parse(fs.readFileSync(path, "utf-8"));
-    data[userID] = { balance: Math.max(0, balance) };
-    fs.writeFileSync(path, JSON.stringify(data, null, 2));
-  } catch {}
-}
-
-// 🔹 Format balance
-function formatBalance(num) {
-  if (num >= 1e12) return (num / 1e12).toFixed(2).replace(/\.00$/, "") + "T$";
-  if (num >= 1e9) return (num / 1e9).toFixed(2).replace(/\.00$/, "") + "B$";
-  if (num >= 1e6) return (num / 1e6).toFixed(2).replace(/\.00$/, "") + "M$";
-  if (num >= 1e3) return (num / 1e3).toFixed(2).replace(/\.00$/, "") + "k$";
-  return num + "$";
-}
+/**
+* @author MahMUD
+* @author: do not delete it
+*/
 
 module.exports = {
   config: {
     name: "quiz",
-    version: "6.2",
-    author: "Mᴏʜᴀᴍᴍᴀᴅ Aᴋᴀsʜ",
-    countDown: 5,
+    aliases: ["qz"],
+    version: "1.7",
+    author: "MahMUD",
+    countDown: 10,
     role: 0,
-    shortDescription: "✦ Bᴀɴɢʟᴀ Qᴜɪᴢ ✦ Cᴏɪɴ Gᴀᴍᴇ 🎯",
     category: "game",
-    guide: { en: "{p}quiz | {p}quiz h" }
+    guide: {
+      en: "{pn}"
+    }
   },
 
-  onStart: async function ({ api, event, args }) {
-    const { threadID, senderID, messageID } = event;
-    const balance = getBalance(senderID);
-
-    // 🧠 Help
-    if (args[0]?.toLowerCase() === "h" || args[0] === "help") {
-      return api.sendMessage(
-`🧠 Qᴜɪᴢ Gᴜɪᴅᴇ 🎯
-━━━━━━━━━━━━━━━
-✅ Cᴏʀʀᴇᴄᴛ: +1,000 Cᴏɪɴs
-❌ Wʀᴏɴɢ: −50 Cᴏɪɴs
-💰 Mɪɴɪᴍᴜᴍ Bᴀʟᴀɴᴄᴇ: 30
-━━━━━━━━━━━━━━━
-🎮 Exᴀᴍᴘʟᴇ: !quiz`,
-        threadID,
-        messageID
-      );
-    }
-
-    // 💰 Low balance
-    if (balance < 30) {
-      return api.sendMessage(
-`⚠️ Iɴsᴜғғɪᴄɪᴇɴᴛ Bᴀʟᴀɴᴄᴇ!
-💎 Yᴏᴜʀ Bᴀʟᴀɴᴄᴇ: ${formatBalance(balance)}
-🎮 Mɪɴɪᴍᴜᴍ Rᴇǫᴜɪʀᴇᴅ: 30$`,
-        threadID,
-        messageID
-      );
-    }
-
+  onStart: async function ({ api, event, usersData, args }) {
+    const obfuscatedAuthor = String.fromCharCode(77, 97, 104, 77, 85, 68); 
+     if (module.exports.config.author !== obfuscatedAuthor) {
+      return api.sendMessage("You are not authorized to change the author name.\n", event.threadID, event.messageID);
+     }
+    
     try {
-      const { data } = await axios.get(
-        "https://rubish-apihub.onrender.com/rubish/quiz-api?category=Bangla&apikey=rubish69"
-      );
+      const input = args.join("").toLowerCase() || "bn";
+      const category = input === "en" || input === "english" ? "english" : "bangla";
 
-      if (!data?.question || !data?.answer) throw new Error("Invalid API");
+      const apiUrl = await mahmud();
+      const res = await axios.get(`${apiUrl}/api/quiz?category=${category}`);
+      const quiz = res.data;
 
-      const quizMsg =
-`✦ Bᴀɴɢʟᴀ Qᴜɪᴢ ✦
-${data.question}
+      if (!quiz) {
+        return api.sendMessage("❌ No quiz available for this category.", event.threadID, event.messageID);
+      }
 
-🇦 ${data.A} • 🇧 ${data.B}
-🇨 ${data.C} • 🇩 ${data.D}
+      const { question, correctAnswer, options } = quiz;
+      const { a, b, c, d } = options;
+      const quizMsg = {
+        body: `\n╭──✦ ${question}\n├‣ 𝗔) ${a}\n├‣ 𝗕) ${b}\n├‣ 𝗖) ${c}\n├‣ 𝗗) ${d}\n╰──────────────────‣\n𝐑𝐞𝐩𝐥𝐲 𝐰𝐢𝐭𝐡 𝐲𝐨𝐮𝐫 𝐚𝐧𝐬𝐰𝐞𝐫.`,
+      };
 
-✍️ Rᴇᴘʟʏ: A / B / C / D`;
-
-      api.sendMessage(quizMsg, threadID, (err, info) => {
-        if (err || !info) return;
-
+      api.sendMessage(quizMsg, event.threadID, (error, info) => {
         global.GoatBot.onReply.set(info.messageID, {
-          commandName: "quiz",
-          author: senderID,
-          answer: data.answer,
-          messageID: info.messageID
+          type: "reply",
+          commandName: this.config.name,
+          author: event.senderID,
+          messageID: info.messageID,
+          correctAnswer
         });
-      });
 
-    } catch {
-      api.sendMessage(
-`❌ Sᴏᴍᴇᴛʜɪɴɢ Wᴇɴᴛ Wʀᴏɴɢ!
-😵 Fᴀɪʟᴇᴅ ᴛᴏ Lᴏᴀᴅ Qᴜɪᴢ.
-Pʟᴇᴀsᴇ Tʀʏ Aɢᴀɪɴ Lᴀᴛᴇʀ.`,
-        threadID,
-        messageID
-      );
+        setTimeout(() => {
+          api.unsendMessage(info.messageID);
+        }, 40000);
+      }, event.messageID);
+    } catch (error) {
+      console.error(error);
+      api.sendMessage("🥹error, contact MahMUD.", event.threadID, event.messageID);
     }
   },
 
-  // 🔁 Reply handler
-  onReply: async function ({ api, event, Reply }) {
-    const { senderID, body, threadID } = event;
-    if (senderID !== Reply.author) return;
+  onReply: async function ({ event, api, Reply, usersData }) {
+    const { correctAnswer, author } = Reply;
+    if (event.senderID !== author) return api.sendMessage("𝐓𝐡𝐢𝐬 𝐢𝐬 𝐧𝐨𝐭 𝐲𝐨𝐮𝐫 𝐪𝐮𝐢𝐳 𝐛𝐚𝐛𝐲 >🐸", event.threadID, event.messageID);
 
-    const userAns = body.trim().toUpperCase();
-    if (!["A", "B", "C", "D"].includes(userAns)) {
-      return api.sendMessage(
-`⚠️ Iɴᴠᴀʟɪᴅ Rᴇᴘʟʏ!
-✍️ Tʏᴘᴇ Oɴʟʏ: A / B / C / D
-Exᴀᴍᴘʟᴇ: A`,
-        threadID
-      );
-    }
+    await api.unsendMessage(Reply.messageID);
+    const userReply = event.body.trim().toLowerCase();
 
-    let balance = getBalance(senderID);
-
-    if (userAns === Reply.answer) {
-      balance += 1000;
-      setBalance(senderID, balance);
-      await api.unsendMessage(Reply.messageID);
-      global.GoatBot.onReply.delete(Reply.messageID);
-
-      api.sendMessage(
-`✅ Cᴏʀʀᴇᴄᴛ Aɴsᴡᴇʀ!
-🎉 Yᴏᴜ Eᴀʀɴᴇᴅ +1,000 Cᴏɪɴs
-💎 Nᴇᴡ Bᴀʟᴀɴᴄᴇ: ${formatBalance(balance)}`,
-        threadID
-      );
+    if (userReply === correctAnswer.toLowerCase()) {
+      const rewardCoins = 500;
+      const rewardExp = 121;
+      const userData = await usersData.get(author);
+      await usersData.set(author, {
+        money: userData.money + rewardCoins,
+        exp: userData.exp + rewardExp,
+        data: userData.data
+      });
+      api.sendMessage(`✅ | Correct answer baby\nYou earned ${rewardCoins} coins & ${rewardExp} exp.`, event.threadID, event.messageID);
     } else {
-      balance = Math.max(0, balance - 50);
-      setBalance(senderID, balance);
-
-      api.sendMessage(
-`❌ Wʀᴏɴɢ Aɴsᴡᴇʀ!
-😔 −50 Cᴏɪɴs Dᴇᴅᴜᴄᴛᴇᴅ
-💎 Cᴜʀʀᴇɴᴛ Bᴀʟᴀɴᴄᴇ: ${formatBalance(balance)}
-🔄 Tʀʏ Aɢᴀɪɴ!`,
-        threadID
-      );
+      api.sendMessage(`❌ | Wrong answer baby\nThe correct answer was: ${correctAnswer}`, event.threadID, event.messageID);
     }
   }
 };
