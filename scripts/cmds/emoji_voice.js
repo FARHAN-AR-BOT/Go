@@ -69,7 +69,7 @@ longDescription: "One emoji triggers multiple voices, sent randomly 😘",
       "🫶":
 ["https://files.catbox.moe/egturw.mp3"],
       "👍":
-["https://files.catbox.moe/95rjvr.mp3"],
+["https://files.catbox.moe/f2qevj.mp3"],
  };
 
     const emoji = body.trim();
