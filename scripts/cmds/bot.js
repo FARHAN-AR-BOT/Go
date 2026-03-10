@@ -57,7 +57,7 @@ if (!body) return;
 const lowerBody = body.toLowerCase();
 
 if (lowerBody.startsWith("bot") || lowerBody.startsWith("বট")) {
-const text = body.replace(/^(bot|বট)\s*/i, "Bot").trim();
+const text = body.replace(/^(bot|বট)\s*/i, "").trim();
 
 if (!text) {
 const name = await usersData.getName(senderID);
